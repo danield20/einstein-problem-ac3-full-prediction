@@ -1,0 +1,17 @@
+A = ['Nationality', 'Color', 'Drink', 'Smoke', 'Pet']
+D = {
+'Color': ['Blue', 'Green', 'Ivory', 'Red', 'Yellow'],
+'Nationality': ['Englishman', 'Japanese', 'Norwegian', 'Spaniard', 'Ukrainian'],
+'Pet': ['Dog', 'Fox', 'Horse', 'Snails', 'Zebra'],
+'Smoke': ['Chesterfield', 'Kools', 'Lucky Strike', 'Old Gold', 'Parliament'],
+'Drink': ['Coffee', 'Milk', 'Orange juice', 'Tea', 'Water'],
+}
+Text = 'The Englishman lives in the red house. The Spaniard owns a dog. Coffee is drunk \
+in the green house. The Ukrainian drinks tea. The green house is immediately to the right \
+of the ivory house. The Old Gold smoker owns snails. Kools are smoked in the yellow house. \
+Milk is drunk in the house in the middle. The Norwegian lives in the first house. The man \
+who smokes Chesterfield cigarettes lives in the house next to the man with the fox. Kools \
+are smoked in the house next to the house where the horse is kept. The Lucky Strike smoker \
+drinks orange juice. The Japanese smokes Parliament. The Norwegian lives next to the blue \
+house'
+Q = 'Who owns a zebra'
