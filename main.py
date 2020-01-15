@@ -12,7 +12,9 @@ values = {}
 constraints = []
 affirmations = []
 question = []
+arcs = []
 dom_per_var = {}
+dom_per_var_p = {}
 key_words = ["first", "middle", "last", "right", "left", "next"]
 first = 1
 middle = 3
@@ -33,10 +35,12 @@ def read_input():
 
 def make_all_variables():
     global attributes
-    for typeVar in attributes:
-        for i in range(5):
-            variables.append(typeVar + str(i))
-            dom_per_var[typeVar + str(i)] = copy.deepcopy(values[typeVar])
+    global dom_per_var_p
+    for category in values.keys():
+        for elem in values[category]:
+            variables.append(elem)
+            dom_per_var[elem] = list(range(5))
+    dom_per_var_p = copy.deepcopy(dom_per_var)
 
 def value_constraint(v, x0):
     return v == x0
@@ -47,48 +51,16 @@ def diff_value_constraint(v, x0):
 def different_values(x0, x1):
     return x0 != x1
 
-def two_values_constraint(v1,v2,x0=0,x1=0,x2=0,x3=0,x4=0,x5=0,x6=0,x7=0,x8=0,x9=0):
-    if x0 == v1 and x1 == v2:
-        return True
-    if x2 == v1 and x3 == v2:
-        return True
-    if x4 == v1 and x5 == v2:
-        return True
-    if x6 == v1 and x7 == v2:
-        return True
-    if x8 == v1 and x9 == v2:
-        return True
-    return False
+def two_values_constraint(x0, x1):
+    return x0 == x1
 
-def right_constraint(v1,v2,x0=0,x1=0,x2=0,x3=0,x4=0,x5=0,x6=0,x7=0,x8=0,x9=0):
-    if x0 == v1 and x1 == v2:
-        return True
-    if x2 == v1 and x3 == v2:
-        return True
-    if x4 == v1 and x5 == v2:
-        return True
-    if x6 == v1 and x7 == v2:
-        return True
-    if x8 == v1 and x9 == v2:
-        return True
-    return False
+def right_constraint(x0,x1):
+    return (x0 - x1) == 1
 
-def next_constraint(v1,v2,x0=0,x1=0,x2=0,x3=0,x4=0,x5=0,x6=0,x7=0,x8=0,x9=0):
-    if x0 == v1 and x1 == v2:
-        return True
-    if x2 == v1 and x3 == v2:
-        return True
-    if x4 == v1 and x5 == v2:
-        return True
-    if x6 == v1 and x7 == v2:
-        return True
-    if x8 == v1 and x9 == v2:
-        return True
-    return False
+def next_constraint(x0,x1):
+    return abs(x0-x1) == 1
 
 def make_2_value_constr(afr):
-    type1 = ""
-    type2 = ""
     val1 = ""
     val2 = ""
     done = False
@@ -96,45 +68,39 @@ def make_2_value_constr(afr):
     for x in values:
         for val in values[x]:
             if val in afr:
-                if type1 == "" :
-                    type1 = x
+                if val1 == "" :
                     val1 = val
                 else:
-                    type2 = x
                     val2 = val
                     done = True
         if done:
             break
 
-    current_constraint_vars = []
-    for x in range(5):
-        current_constraint_vars.append(type1 + str(x))
-        current_constraint_vars.append(type2 + str(x))
+    if afr.index(val1) > afr.index(val2):
+        aux = val1
+        val1 = val2
+        val2 = aux
 
-    return [current_constraint_vars, functools.partial(two_values_constraint, val1, val2)]
+    return [[val1, val2], two_values_constraint]
 
 def make_first_const(afr):
-    type1 = ""
     val1 = ""
 
     done = False
     for x in values:
         for val in values[x]:
             if val in afr:
-                type1 = x
                 val1 = val
                 done = True
         if done:
             break
 
-    variable = type1 + "0"
+    dom_per_var[val1] = [0]
+    dom_per_var_p[val1] = [0]
 
-    dom_per_var[variable] = [val1]
-
-    return [[variable], functools.partial(value_constraint, val1)]
+    return []
 
 def make_middle_const(afr):
-    type1 = ""
     val1 = ""
 
     done = False
@@ -147,14 +113,12 @@ def make_middle_const(afr):
         if done:
             break
 
-    variable = type1 + "2"
+    dom_per_var[val1] = [2]
+    dom_per_var_p[val1] = [2]
 
-    dom_per_var[variable] = [val1]
-
-    return [[variable], functools.partial(value_constraint, val1)]
+    return []
 
 def make_last_const(afr):
-    type1 = ""
     val1 = ""
 
     done = False
@@ -167,16 +131,13 @@ def make_last_const(afr):
         if done:
             break
 
-    variable = type1 + "4"
+    dom_per_var[val1] = [4]
+    dom_per_var_p[val1] = [4]
 
-    dom_per_var[variable] = [val1]
-
-    return [[variable], functools.partial(value_constraint, val1)]
+    return []
 
 def make_dir_const(word, afr):
-    rt = ""
     rv = ""
-    lt = ""
     lv = ""
 
     if word == "right":
@@ -190,7 +151,6 @@ def make_dir_const(word, afr):
     for x in values:
         for val in values[x]:
             if val in right_part:
-                rt = x
                 rv = val
                 done = True
         if done:
@@ -200,32 +160,20 @@ def make_dir_const(word, afr):
     for x in values:
         for val in values[x]:
             if val in left_part:
-                lt = x
                 lv = val
                 done = True
         if done:
             break
 
-    constraints_to_add = []
+    dom_per_var[lv].remove(4)
+    dom_per_var[rv].remove(0)
+    dom_per_var_p[lv].remove(4)
+    dom_per_var_p[rv].remove(0)
 
-    constraints_to_add.append([[lt + "4"], functools.partial(diff_value_constraint, lv)])
-    constraints_to_add.append([[rt + "0"], functools.partial(diff_value_constraint, rv)])
-    dom_per_var[lt + "4"].remove(lv)
-    dom_per_var[rt + "0"].remove(rv)
-
-    current_vars = []
-    for x in range(4):
-        current_vars.append(lt + str(x))
-        current_vars.append(rt + str(x + 1))
-
-    constraints_to_add.append([current_vars, functools.partial(right_constraint, lv, rv)])
-
-    return constraints_to_add
+    return [[rv, lv], right_constraint]
 
 def make_next_const(word, afr):
-    rt = ""
     rv = ""
-    lt = ""
     lv = ""
 
     left_part = afr.split(word)[0]
@@ -235,7 +183,6 @@ def make_next_const(word, afr):
     for x in values:
         for val in values[x]:
             if val in right_part:
-                rt = x
                 rv = val
                 done = True
         if done:
@@ -245,29 +192,12 @@ def make_next_const(word, afr):
     for x in values:
         for val in values[x]:
             if val in left_part:
-                lt = x
                 lv = val
                 done = True
         if done:
             break
 
-    constraints_to_add = []
-
-    current_vars = []
-    for x in range(4):
-        current_vars.append(lt + str(x))
-        current_vars.append(rt + str(x + 1))
-
-    constraints_to_add.append([current_vars, functools.partial(next_constraint, lv, rv)])
-
-    current_vars = []
-    for x in range(4):
-        current_vars.append(rt + str(x))
-        current_vars.append(lt + str(x + 1))
-
-    constraints_to_add.append([current_vars, functools.partial(next_constraint, rv, lv)])
-
-    return constraints_to_add
+    return [[lv, rv], next_constraint]
 
 
 def make_special_constr(word, afr):
@@ -284,9 +214,11 @@ def make_special_constr(word, afr):
 
 def make_constraints():
     global constraints
+
     # all 5 have different values for each field
-    for p in combinations(variables, 2):
-        if p[0][:-1] == p[1][:-1]:
+    for category in values.keys():
+        current_list = values[category]
+        for p in combinations(current_list, 2):
             constraints.append([list(p), different_values])
 
     # get restrictions from afirmations
@@ -296,55 +228,311 @@ def make_constraints():
             if word in afr:
                 done = True
                 if word == "right" or word == "left" or word == "next":
-                    constraints.extend(make_special_constr(word, afr))
-                else:
                     constraints.append(make_special_constr(word, afr))
+                else:
+                    make_special_constr(word, afr)
                 break
         if not done:
             constraints.append(make_2_value_constr(afr))
 
-def getRelatedConstraints(x):
-    related_constraints = []
+def make_arcs():
+    global arcs
     for c in constraints:
         vars = c[0]
-        if x in vars:
-            related_constraints.insert(0, c)
-    return related_constraints
+        func = c[1]
+        tuple1 = copy.deepcopy(vars)
+        tuple1.append(func)
+        arcs.append(tuple1)
+        tuple2 = copy.deepcopy(vars)
+        tuple2.append(func)
+        tuple2.append("r")
+        arcs.append(tuple2)
 
-def arc_reduce(c, x):
+def get_check_var(arc):
+    if arc[len(arc) - 1] == "r":
+        return (arc[1], arc[0])
+    return (arc[0], arc[1])
+
+def print_dom_vars(mp):
+    for k in mp.keys():
+        print(k, mp[k])
+
+def arc_reduce(arc):
     change = False
-    x_index = c[0].index(x)
+    x, y = get_check_var(arc)
+    new_domain = copy.deepcopy(dom_per_var[x])
+
     for vx in dom_per_var[x]:
-        possible_vars = copy.deepcopy(c[0])
-        possible_vars.remove(x)
-        for var in possible_vars:
-            for vy in dom_per_var[var]:
-                x_index = "x" + str(c[0].index(x))
-                y_index = "x" + str(c[0].index(var))
-                f_call_str = 'c[1](' + x_index + '="' + vx + '",' + y_index + '="' + vy + '")'
-                constraint_value = eval(f_call_str)
-                print(f_call_str, constraint_value)
-                input()
+        sattisfied = False
+        for vy in dom_per_var[y]:
+            if arc.index(x) < arc.index(y):
+                is_sattisfied = arc[2](vx, vy)
+                if is_sattisfied:
+                    sattisfied = True
+                    break
+            else:
+                is_sattisfied = arc[2](vy, vx)
+                if is_sattisfied:
+                    sattisfied = True
+                    break
+
+        if not sattisfied:
+            new_domain.remove(vx)
+            change = True
+
+    dom_per_var[x] = new_domain
+    return change
+
+def get_right_side(x):
+    ret_arcs = []
+
+    for arc in arcs:
+        if x not in arc:
+            continue
+
+        if arc.index(x) == 0 and arc[len(arc) - 1] == "r":
+            ret_arcs.append(arc)
+
+        if arc.index(x) == 1 and arc[len(arc) - 1] != "r":
+            ret_arcs.append(arc)
+
+    return ret_arcs
 
 def ac3():
-    for x in variables:
-        worklist = getRelatedConstraints(x)
+    worklist = copy.copy(arcs)
+    worklist.reverse()
 
-        while len(worklist) != 0:
-            current_constr = worklist.pop()
-            arc_reduce(current_constr, x)
+    while len(worklist) != 0:
+        current_arc = worklist.pop()
+        x, y = get_check_var(current_arc)
+        if (arc_reduce(current_arc)):
+            if len(dom_per_var[x]) == 0:
+                return False
+            else:
+                next_arcs = get_right_side(x)
+                for narc in next_arcs:
+                    if narc not in worklist:
+                        worklist.append(narc)
+
+    return True
+
+def get_contraints(v1, v2):
+    final_constraints = []
+
+    for c in constraints:
+        vars = c[0]
+        if vars[0] == v1 and vars[1] == v2:
+            final_constraints.append(c)
+        if vars[1] == v1 and vars[0] == v2:
+            final_constraints.append(c)
+
+    return final_constraints
+
+def check_if_ok(solution):
+    assigned_variable = solution.keys()
+
+    for p in combinations(assigned_variable, 2):
+        list_of_constraints = get_contraints(p[0], p[1])
+        for c in list_of_constraints:
+            vars = c[0]
+            if vars.index(p[0]) < vars.index(p[1]):
+                if not c[1](solution[p[0]], solution[p[1]]):
+                    return False
+            else:
+                if not c[1](solution[p[1]], solution[p[0]]):
+                    return False
+
+    return True
+
+def print_solution(solution):
+    final_sol = [[],[],[],[],[]]
+
+    for var in solution:
+        final_sol[solution[var]].append(var)
+
+    for idx,house in enumerate(final_sol):
+        print("House" + str(idx) + ": " + str(house))
+
+def solve_problem(solution):
+    if not check_if_ok(solution):
+        return False
+
+    if len(solution.keys()) == 25:
+        return solution
+
+    remaining_vars = [x for x in variables if x not in solution.keys()]
+
+    for value in dom_per_var[remaining_vars[0]]:
+        solution[remaining_vars[0]] = value
+        rez = solve_problem(solution)
+        if rez != False:
+            return rez
+        del solution[remaining_vars[0]]
+
+    return False
+
+def check_forward(var, solution):
+    tnou = {}
+    remaining_vars = [x for x in variables if x not in solution.keys()]
+
+    for var2 in remaining_vars:
+        list_of_constraints = get_contraints(var, var2)
+        if list_of_constraints != []:
+            tnou[var2] = []
+        else:
+            continue
+        for val2 in dom_per_var_p[var2]:
+            for c in list_of_constraints:
+                vars = c[0]
+                if vars.index(var) < vars.index(var2):
+                    if c[1](solution[var], val2):
+                        if val2 not in tnou[var2]:
+                            tnou[var2].append(val2)
+                else:
+                    if c[1](val2, solution[var]):
+                        if val2 not in tnou[var2]:
+                            tnou[var2].append(val2)
+
+        if var2 in tnou and tnou[var2] == []:
+            return None
+
+    return tnou
+
+def check_future(var, tnou, solution):
+
+    if len(solution.keys()) + 1 >= 25:
+        return
+
+    # for u1, u+1, n
+    for var2 in tnou.keys():
+        # for l1 in tnou[u1]
+        for val2 in tnou[var2]:
+            # for u2, u+1, n, u1!=u2
+            for var3 in tnou.keys():
+
+                if var2 != var3:
+                    consistent = False
+                    list_of_constraints = get_contraints(var2, var3)
+                    if list_of_constraints == []:
+                        consistent = True
+                    #for l2 in tnou[u2]
+                    for val3 in tnou[var3]:
+                        found = False
+                        for c in list_of_constraints:
+                            vars = c[0]
+                            if vars.index(var2) < vars.index(var3):
+                                if c[1](val2, val3):
+                                    found = True
+                                    break
+                            else:
+                                if c[1](val3, val2):
+                                    found = True
+                                    break
+
+                        if found:
+                            consistent = True
+                            break
+
+                    if not consistent:
+                        tnou[var2].remove(val2)
+                        break
+
+        if tnou[var2] == []:
+            return None
+
+    return tnou
 
 
+def total_prediction(solution):
+
+    if not check_if_ok(solution):
+        return False
+
+    if len(solution.keys()) == 25:
+        return solution
+
+    remaining_vars = [x for x in variables if x not in solution.keys()]
+
+    for value in dom_per_var_p[remaining_vars[0]]:
+        solution[remaining_vars[0]] = value
+
+        if len(solution.keys()) < 25:
+            tnou = check_forward(remaining_vars[0], solution)
+            if tnou != None:
+                if len(tnou.keys()) >= 2:
+                    tnou = check_future(remaining_vars[0], tnou, solution)
+                else:
+                    tnou = True
+                if tnou != None:
+                    rez = total_prediction(solution)
+                    if rez != False:
+                        return rez
+                    del solution[remaining_vars[0]]
+                else:
+                    del solution[remaining_vars[0]]
+            else:
+                del solution[remaining_vars[0]]
+        else:
+            rez = total_prediction(solution)
+            if rez != False:
+                return rez
+            del solution[remaining_vars[0]]
+
+    return False
+
+def get_answer_to_questions(solution):
+    variable = ""
+
+    done = False
+    for x in values:
+        for val in values[x]:
+            if val in question:
+                variable = val
+                done = True
+        if done:
+            break
+
+    print("Answer: " + variable + " is in house " + str(solution[variable]))
+    print()
+
+
+def solve_using_complete_prediction():
+    print("Solving with complete prediction!\n")
+    sol = total_prediction({})
+    print_solution(sol)
+    get_answer_to_questions(sol)
+
+def solve_using_ac3():
+    # reduce domains
+    print("Solve using ac3!\n")
+    possible = ac3()
+
+    if not possible:
+        print("Solution not possible")
+
+    # calculate solution
+    sol = solve_problem({})
+    print_solution(sol)
+    get_answer_to_questions(sol)
 
 
 def main():
     read_input()
     make_all_variables()
     make_constraints()
-    for x in constraints:
-        print(x)
-    print("START AC#")
-    ac3()
+    make_arcs()
+
+    if len(sys.argv) < 3:
+        print("main.py file ac3/pred")
+        return
+
+    if sys.argv[2] == "ac3":
+        solve_using_ac3()
+    elif sys.argv[2] == "pred":
+        solve_using_complete_prediction()
+    else:
+        solve_using_ac3()
+        solve_using_complete_prediction()
 
 if __name__ == "__main__":
     main()
